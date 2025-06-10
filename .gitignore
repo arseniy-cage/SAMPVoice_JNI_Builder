@@ -1,0 +1,21 @@
+# NDK Build outputs
+obj/
+libs/
+
+# Other potential temporary files
+*.o
+*.d
+*.gcno
+*.gcda
+*.gcov
+*.a
+
+# IDE and OS generated files
+.idea/
+.gradle/
+build/
+local.properties
+.DS_Store
+Thumbs.db
+*.iml
+.cxx/

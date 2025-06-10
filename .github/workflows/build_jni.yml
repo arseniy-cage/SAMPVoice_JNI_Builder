@@ -1,0 +1,47 @@
+name: Build JNI libsampvoice.so
+
+on:
+  push:
+    branches:
+      - main # Или master
+  pull_request:
+    branches:
+      - main # Или master
+  workflow_dispatch: # Добавляем возможность запускать вручную из интерфейса GitHub Actions
+
+jobs:
+  build:
+    runs-on: ubuntu-latest # Виртуальная машина Ubuntu, на которой есть NDK
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Android NDK and SDK
+      # GitHub Actions уже имеет Android SDK и NDK предустановленными.
+      # Нам просто нужно убедиться, что они добавлены в PATH.
+      # NDK_ROOT - это переменная окружения, которая может быть использована ndk-build.
+      run: |
+        echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
+        echo "ANDROID_NDK_HOME=$ANDROID_NDK_LATEST_HOME" >> $GITHUB_ENV # Путь к последней версии NDK
+        echo "$ANDROID_NDK_LATEST_HOME" >> $GITHUB_PATH # Добавляем NDK в PATH для ndk-build
+
+    - name: Compile JNI with ndk-build
+      run: |
+        # Перейдите в директорию, где находится ваш Android.mk
+        # Предполагаем, что Android.mk находится в корне репозитория, который вы склонировали.
+        # Если Android.mk находится в подпапке (например, src/main/jni), измените -C . на -C src/main/jni
+        ndk-build -C . APP_ABI=armeabi-v7a # Компилируем только для armeabi-v7a, чтобы получить нужный .so
+      env:
+        # Убедитесь, что здесь указан путь к корневой папке вашего JNI исходника
+        # Если ваш Android.mk находится, например, в subfolder/jni_sources, то -C subfolder/jni_sources
+        # GITHUB_WORKSPACE - это корневая папка репозитория на виртуальной машине
+        NDK_PROJECT_PATH: "${{ github.workspace }}" # Указываем NDK, где находится проект
+
+    - name: Upload libsampvoice.so artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: libsampvoice_armeabi-v7a
+        # Путь к скомпилированному .so файлу относительно корня репозитория
+        # Предполагается, что ndk-build создаст libs/armeabi-v7a/libsampvoice.so
+        path: libs/armeabi-v7a/libsampvoice.so
